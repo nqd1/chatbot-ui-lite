@@ -8,6 +8,7 @@ export const Navbar: FC = () => {
           className="ml-2 hover:opacity-50"
           href="https://code-scaffold.vercel.app"
         >
+          <img src="/media/Sinno_logo.png" alt="logo" width={32} height={32} />
           Chatbot Sonni
         </a>
       </div>
