@@ -6,7 +6,7 @@ export const Navbar: FC = () => {
       <div className="font-bold text-3xl flex items-center">
         <a
           className="ml-2 hover:opacity-50"
-          href="https://code-scaffold.vercel.app"
+          href="https://www.facebook.com/SINNOclub/"
         >
           <img src="/media/Sinno_logo.png" alt="logo" width={32} height={32} />
           Chatbot Sonni
