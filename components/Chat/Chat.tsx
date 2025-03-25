@@ -19,7 +19,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
         <ResetChat onReset={onReset} />
       </div>
 
-      <div className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300">
+      <div className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -36,8 +36,10 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
         )}
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-neutral-200 p-4">
-        <ChatInput onSend={onSend} />
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 p-4">
+        <div className="max-w-[800px] mx-auto">
+          <ChatInput onSend={onSend} />
+        </div>
       </div>
     </div>
   );
