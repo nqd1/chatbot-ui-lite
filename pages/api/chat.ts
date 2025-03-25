@@ -1,5 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Message } from '@/types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Initialize Gemini API
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 export default async function handler(
   req: NextApiRequest,
@@ -8,9 +11,9 @@ export default async function handler(
   console.log('API Request received');
   
   // Check for API key
-  if (!process.env.OPENAI_API_KEY) {
-    console.error('OpenAI API key missing');
-    res.status(500).json({ error: 'OpenAI API key is not configured' });
+  if (!process.env.GOOGLE_API_KEY) {
+    console.error('Google API key missing');
+    res.status(500).json({ error: 'Google API key is not configured' });
     return;
   }
 
@@ -32,38 +35,34 @@ export default async function handler(
   }
 
   try {
-    console.log('Sending request to OpenAI');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: messages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        })),
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
+    console.log('Sending request to Gemini');
+    
+    // Get the model
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    // Start a chat
+    const chat = model.startChat({
+      history: messages.map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: msg.content,
+      })),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error response:', error);
-      res.status(500).json({ error: error.error?.message || 'OpenAI API error' });
-      return;
-    }
+    // Send message and get response
+    const result = await chat.sendMessage(messages[messages.length - 1].content);
+    const response = await result.response;
+    const text = response.text();
 
-    const data = await response.json();
-    console.log('OpenAI response:', data);
-    res.status(200).json(data.choices[0].message);
+    console.log('Gemini response:', text);
+    
+    res.status(200).json({
+      role: 'assistant',
+      content: text
+    });
   } catch (error) {
     console.error('Detailed error:', error);
     res.status(500).json({ 
-      error: 'Failed to communicate with OpenAI API',
+      error: 'Failed to communicate with Gemini API',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
