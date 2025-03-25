@@ -120,15 +120,14 @@ export default function Home() {
       <div className="flex flex-col h-screen">
         <Navbar />
 
-        <div className="flex-1 overflow-auto sm:px-10 pb-4 sm:pb-10">
-          <div className="max-w-[800px] mx-auto mt-4 sm:mt-12">
+        <div className="flex-1 overflow-hidden sm:px-10 pb-4 sm:pb-10">
+          <div className="max-w-[800px] mx-auto mt-4 sm:mt-12 h-full">
             <Chat
               messages={messages}
               loading={loading}
               onSend={handleSend}
               onReset={handleReset}
             />
-            <div ref={messagesEndRef} />
           </div>
         </div>
         <Footer />
