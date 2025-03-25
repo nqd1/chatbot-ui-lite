@@ -25,33 +25,39 @@ import {
   
   async function run(prompt) {
     try {
-      const chatSession = model.startChat({
-        generationConfig,
-        history: [],
-      });
-  
-      const result = await chatSession.sendMessage(prompt);
-      if (!result || !result.response) {
+      // For text-only generation
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      
+      if (!response) {
         return "This is test message";
       }
-  
-      // TODO: Following code needs to be updated for client-side apps.
-      const candidates = result.response.candidates;
-      for(let candidate_index = 0; candidate_index < candidates.length; candidate_index++) {
-        for(let part_index = 0; part_index < candidates[candidate_index].content.parts.length; part_index++) {
-          const part = candidates[candidate_index].content.parts[part_index];
-          if(part.inlineData) {
-            try {
-              const filename = `output_${candidate_index}_${part_index}.${mime.extension(part.inlineData.mimeType)}`;
-              fs.writeFileSync(filename, Buffer.from(part.inlineData.data, 'base64'));
-              console.log(`Output written to: ${filename}`);
-            } catch (err) {
-              console.error(err);
+
+      // Handle text response
+      const text = response.text();
+      if (text) {
+        return text;
+      }
+
+      // Handle candidates with inline data
+      if (response.candidates && response.candidates.length > 0) {
+        for(let candidate_index = 0; candidate_index < response.candidates.length; candidate_index++) {
+          for(let part_index = 0; part_index < response.candidates[candidate_index].content.parts.length; part_index++) {
+            const part = response.candidates[candidate_index].content.parts[part_index];
+            if(part.inlineData) {
+              try {
+                const filename = `output_${candidate_index}_${part_index}.${mime.extension(part.inlineData.mimeType)}`;
+                fs.writeFileSync(filename, Buffer.from(part.inlineData.data, 'base64'));
+                console.log(`Output written to: ${filename}`);
+              } catch (err) {
+                console.error(err);
+              }
             }
           }
         }
       }
-      return result.response.text() || "This is test message";
+
+      return "This is test message";
     } catch (error) {
       console.error("Error in run function:", error);
       return "This is test message";

@@ -1,5 +1,5 @@
 import { Message } from "@/types";
-import { OpenAIStream } from "@/utils";
+import run from "@/gemini";
 
 export const config = {
   runtime: "edge"
@@ -19,30 +19,31 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response('Messages are required and must be an array', { status: 400 });
     }
 
-    const charLimit = 12000;
-    let charCount = 0;
-    let messagesToSend = [];
+    // Get the last message from user
+    const lastMessage = messages[messages.length - 1];
+    
+    // Call Gemini API
+    const response = await run(lastMessage.content);
+    
+    // Return the response
+    return new Response(JSON.stringify({ 
+      role: "assistant",
+      content: response || "This is test message"
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-    for (let i = 0; i < messages.length; i++) {
-      const message = messages[i];
-      if (charCount + message.content.length > charLimit) {
-        break;
-      }
-      charCount += message.content.length;
-      messagesToSend.push(message);
-    }
-
-    if (!process.env.OPENAI_API_KEY) {
-      return new Response('OpenAI API key is missing', { status: 500 });
-    }
-
-    const stream = await OpenAIStream(messagesToSend);
-    return new Response(stream);
   } catch (error) {
     console.error('Chat API Error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }), 
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        role: "assistant",
+        content: "This is test message" 
+      }), 
+      { 
+        status: 200, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
     );
   }
 };
