@@ -18,7 +18,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = (smooth: boolean = false) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+    messagesEndRef.current?.scrollIntoView({behavior : "smooth"})//({ behavior: smooth ? "smooth" : "auto" });
   };
 
   const handleScroll = () => {
@@ -42,7 +42,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24 bg-[#fd888e]"
+        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24 bg-[#FFFFFF]"
       >
         {messages.map((message, index) => (
           <div
