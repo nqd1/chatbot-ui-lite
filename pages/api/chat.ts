@@ -1,18 +1,27 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Message } from '@/types';
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing Environment Variable OPENAI_API_KEY');
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Check for API key
+  if (!process.env.OPENAI_API_KEY) {
+    res.status(500).json({ error: 'OpenAI API key is not configured' });
+    return;
+  }
+
+  // Check request method
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
   const messages = req.body.messages;
 
-  if (!messages) {
-    res.status(400).json({ error: 'No messages provided' });
+  // Validate messages
+  if (!messages || !Array.isArray(messages)) {
+    res.status(400).json({ error: 'Messages must be an array' });
     return;
   }
 
@@ -33,7 +42,8 @@ export default async function handler(
 
     if (!response.ok) {
       const error = await response.json();
-      res.status(500).json({ error: error.error.message });
+      console.error('OpenAI API error:', error);
+      res.status(500).json({ error: error.error?.message || 'OpenAI API error' });
       return;
     }
 
@@ -41,6 +51,6 @@ export default async function handler(
     res.status(200).json(data.choices[0].message);
   } catch (error) {
     console.error('Error in chat API:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Failed to communicate with OpenAI API' });
   }
 }
