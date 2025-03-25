@@ -14,7 +14,14 @@ export const Navbar: FC = () => {
               height={32}
               className="mr-2"
             />
-            <span className="text-xl font-bold text-neutral-900">Chatbot Sinno</span>
+            <a 
+              href="https://www.facebook.com/SINNOclub/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xl font-bold text-white hover:text-neutral-200 transition-colors"
+            >
+              Chatbot Sinno
+            </a>
           </div>
         </div>
       </div>
