@@ -22,23 +22,39 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get the last message from user
     const lastMessage = messages[messages.length - 1];
+    console.log("Processing message:", lastMessage);
     
     // Call Gemini API
+    console.log("Calling Gemini API...");
     const response = await run(lastMessage.content);
+    console.log("Gemini API response:", response);
+    
+    // If response is the default message, throw an error
+    if (response === "This is test message") {
+      throw new Error("Received default message from Gemini");
+    }
     
     // Return the response
-    return new Response(JSON.stringify({ 
+    const jsonResponse = { 
       role: "assistant",
       content: response
-    }), {
+    };
+    console.log("Sending response:", jsonResponse);
+    
+    return new Response(JSON.stringify(jsonResponse), {
       headers: { 
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store, no-cache, must-revalidate'
       }
     });
 
-  } catch (error) {
-    console.error('Chat API Error:', error);
+  } catch (error: any) {
+    console.error('Detailed Chat API Error:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    
     return new Response(
       JSON.stringify({ 
         role: "assistant",
