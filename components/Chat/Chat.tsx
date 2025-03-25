@@ -42,7 +42,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24"
+        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24 bg-[#fd888e]"
       >
         {messages.map((message, index) => (
           <div
@@ -71,7 +71,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       {showScrollButton && (
         <button
           onClick={() => scrollToBottom(true)}
-          className="fixed bottom-24 right-6 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="fixed bottom-24 right-6 bg-[#e24242] text-white p-3 rounded-full shadow-lg hover:opacity-80 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#e24242] focus:ring-offset-2"
           aria-label="Scroll to bottom"
         >
           <svg
