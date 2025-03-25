@@ -7,9 +7,17 @@ export const config = {
 
 const handler = async (req: Request): Promise<Response> => {
   try {
+    if (req.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
     const { messages } = (await req.json()) as {
       messages: Message[];
     };
+
+    if (!messages || !Array.isArray(messages)) {
+      return new Response('Messages are required and must be an array', { status: 400 });
+    }
 
     const charLimit = 12000;
     let charCount = 0;
@@ -24,12 +32,18 @@ const handler = async (req: Request): Promise<Response> => {
       messagesToSend.push(message);
     }
 
-    const stream = await OpenAIStream(messagesToSend);
+    if (!process.env.OPENAI_API_KEY) {
+      return new Response('OpenAI API key is missing', { status: 500 });
+    }
 
+    const stream = await OpenAIStream(messagesToSend);
     return new Response(stream);
   } catch (error) {
-    console.error(error);
-    return new Response("Error", { status: 500 });
+    console.error('Chat API Error:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }), 
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };
 
