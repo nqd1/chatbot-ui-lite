@@ -2,7 +2,8 @@ import { Message } from "@/types";
 import run from "@/gemini";
 
 export const config = {
-  runtime: "edge"
+  runtime: "edge",
+  regions: ['iad1']  // Deploy to Washington DC by default
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -28,9 +29,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Return the response
     return new Response(JSON.stringify({ 
       role: "assistant",
-      content: response || "This is test message"
+      content: response
     }), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
+      }
     });
 
   } catch (error) {
@@ -42,7 +46,10 @@ const handler = async (req: Request): Promise<Response> => {
       }), 
       { 
         status: 200, 
-        headers: { 'Content-Type': 'application/json' } 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate'
+        } 
       }
     );
   }
