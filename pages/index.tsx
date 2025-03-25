@@ -110,9 +110,10 @@ export default function Home() {
           name="viewport"
           content="width=device-width, initial-scale=1"
         />
-        <link
+        <link 
           rel="icon"
-          href="/favicon.ico"
+          type="image/png"
+          href="/Sinno_logo.png"
         />
       </Head>
 
