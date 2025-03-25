@@ -26,14 +26,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const lastMessage = messages[messages.length - 1];
     console.log("Processing message:", lastMessage);
     
+    if (!lastMessage || !lastMessage.content) {
+      throw new Error("Invalid message format");
+    }
+
     // Call Gemini API
-    console.log("Calling Gemini API...");
+    console.log("Calling Gemini API with content:", lastMessage.content);
     const response = await run(lastMessage.content);
     console.log("Gemini API response:", response);
     
-    // If response is the default message, throw an error
-    if (response === "This is test message") {
-      throw new Error("Received default message from Gemini");
+    // Check if response is an error message
+    if (response.startsWith("Error:")) {
+      throw new Error(response);
     }
     
     // Return the response
@@ -46,15 +50,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json(jsonResponse);
 
   } catch (error: any) {
-    console.error('Detailed Chat API Error:', {
+    console.error('Chat API Error:', {
       message: error.message,
-      name: error.name,
-      stack: error.stack
+      stack: error.stack,
+      name: error.name
     });
+    
+    // Return error message from Gemini if available
+    const errorMessage = error.message.startsWith("Error:") 
+      ? error.message 
+      : "An unexpected error occurred";
     
     return res.status(200).json({ 
       role: "assistant",
-      content: "This is test message" 
+      content: errorMessage
     });
   }
 };

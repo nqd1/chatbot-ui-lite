@@ -40,45 +40,76 @@ import {
     ],
   });
   
-  async function run(prompt) {
+  async function testConnection() {
     try {
-      console.log("Starting Gemini API call with prompt:", prompt);
-      
-      // Generate content
-      const result = await model.generateContent(prompt);
-      console.log("Received raw result from Gemini:", result);
-
-      // Get response
+      const result = await model.generateContent("Test connection");
       const response = await result.response;
-      console.log("Processed Gemini response:", response);
+      return response.text() ? true : false;
+    } catch (error) {
+      console.error("Connection test failed:", error);
+      return false;
+    }
+  }
+  
+  async function run(prompt) {
+    if (!prompt || typeof prompt !== 'string') {
+      console.error("Invalid prompt:", prompt);
+      return "Error: Invalid prompt";
+    }
 
-      // Get text from response
-      const text = response.text();
-      console.log("Extracted text from response:", text);
-
-      if (!text) {
-        throw new Error("Empty response text from Gemini");
+    try {
+      // Test connection first
+      const isConnected = await testConnection();
+      if (!isConnected) {
+        throw new Error("Failed to connect to Gemini API");
       }
 
+      console.log("Starting Gemini API call with prompt:", prompt);
+      
+      // Generate content with proper error handling
+      const result = await model.generateContent(prompt);
+      
+      if (!result) {
+        throw new Error("No result from Gemini API");
+      }
+      
+      console.log("Raw result:", result);
+
+      const response = await result.response;
+      if (!response) {
+        throw new Error("No response object from Gemini API");
+      }
+      
+      console.log("Response object:", response);
+
+      const text = response.text();
+      if (!text) {
+        throw new Error("Empty text from Gemini API");
+      }
+      
+      console.log("Final text:", text);
       return text;
+
     } catch (error) {
       console.error("Detailed error in Gemini API:", {
+        error: error.toString(),
         message: error.message,
         name: error.name,
         stack: error.stack,
         prompt: prompt
       });
       
-      // Check for specific error types
-      if (error.message.includes("API key")) {
-        return "Error: Invalid API key configuration";
-      } else if (error.message.includes("network")) {
-        return "Error: Network connection issue";
-      } else if (error.message.includes("quota")) {
+      if (error.message?.includes("API key")) {
+        return "Error: Invalid API key";
+      } else if (error.message?.includes("Failed to connect")) {
+        return "Error: Cannot connect to Gemini API";
+      } else if (error.message?.includes("quota")) {
         return "Error: API quota exceeded";
+      } else if (error.message?.includes("permission")) {
+        return "Error: Permission denied";
       }
       
-      return "This is test message";
+      return "Error: " + error.message;
     }
   }
   
