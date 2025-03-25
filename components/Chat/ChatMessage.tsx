@@ -1,10 +1,22 @@
 import { Message } from "@/types";
 import { FC } from "react";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
 import { CodeBlock } from "./CodeBlock";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  ssr: false,
+});
 
 interface Props {
   message: Message;
+}
+
+interface CodeProps {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  [key: string]: any;
 }
 
 export const ChatMessage: FC<Props> = ({ message }) => {
@@ -27,13 +39,7 @@ export const ChatMessage: FC<Props> = ({ message }) => {
           <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
             <ReactMarkdown
               components={{
-                code({ node, inline, className, children, ...props }: {
-                  node: any;
-                  inline: boolean;
-                  className: string | undefined;
-                  children: React.ReactNode;
-                  [key: string]: any;
-                }) {
+                code({ node, inline, className, children, ...props }: CodeProps) {
                   if (inline) {
                     return (
                       <code className={className} {...props}>
