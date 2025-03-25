@@ -42,7 +42,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24 bg-[#FFFFFF]"
+        className="flex-1 overflow-y-auto rounded-lg p-5 sm:p-5 sm:border border-neutral-300 pb-24 bg-[#FFF5F5]"
       >
         {messages.map((message, index) => (
           <div
