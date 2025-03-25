@@ -1,23 +1,25 @@
 import { Message } from "@/types";
 import run from "@/gemini";
+import { NextApiRequest, NextApiResponse } from 'next';
 
-export const config = {
-  runtime: "edge",
-  regions: ['iad1']  // Deploy to Washington DC by default
-};
+// Remove edge runtime config
+// export const config = {
+//   runtime: "edge",
+//   regions: ['iad1']
+// };
 
-const handler = async (req: Request): Promise<Response> => {
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { messages } = (await req.json()) as {
+    const { messages } = req.body as {
       messages: Message[];
     };
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response('Messages are required and must be an array', { status: 400 });
+      return res.status(400).json({ error: 'Messages are required and must be an array' });
     }
 
     // Get the last message from user
@@ -41,12 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
     };
     console.log("Sending response:", jsonResponse);
     
-    return new Response(JSON.stringify(jsonResponse), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate'
-      }
-    });
+    return res.status(200).json(jsonResponse);
 
   } catch (error: any) {
     console.error('Detailed Chat API Error:', {
@@ -55,19 +52,10 @@ const handler = async (req: Request): Promise<Response> => {
       stack: error.stack
     });
     
-    return new Response(
-      JSON.stringify({ 
-        role: "assistant",
-        content: "This is test message" 
-      }), 
-      { 
-        status: 200, 
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, no-cache, must-revalidate'
-        } 
-      }
-    );
+    return res.status(200).json({ 
+      role: "assistant",
+      content: "This is test message" 
+    });
   }
 };
 
