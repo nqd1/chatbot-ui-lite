@@ -2,30 +2,23 @@ import { Message } from "@/types";
 import run from "@/gemini";
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// Remove edge runtime config
-// export const config = {
-//   runtime: "edge",
-//   regions: ['iad1']
-// };
+export const config = {
+  runtime: 'edge',
+  regions: ['iad1']
+};
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
-    // Enable streaming
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
 
     const { messages } = req.body as {
       messages: Message[];
     };
 
     if (!messages || !Array.isArray(messages)) {
-      res.write('data: ' + JSON.stringify({ error: 'Messages are required and must be an array' }) + '\n\n');
-      return res.end();
+      return res.status(400).json({ error: 'Messages are required and must be an array' });
     }
 
     // Get the last message from user
@@ -33,27 +26,26 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log("Processing message:", lastMessage);
     
     if (!lastMessage || !lastMessage.content) {
-      res.write('data: ' + JSON.stringify({ error: 'Invalid message format' }) + '\n\n');
-      return res.end();
+      throw new Error("Invalid message format");
     }
 
-    // Format message history for Gemini
-    const formattedHistory = messages.map(msg => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: msg.content
-    }));
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
-    // Call Gemini API
+    // Call Gemini API with streaming
     console.log("Calling Gemini API with content:", lastMessage.content);
-    const response = await run(lastMessage.content);
+    const result = await run(lastMessage.content);
     
-    // Send the response
-    res.write('data: ' + JSON.stringify({
+    // Send the complete response at the end
+    res.write(`data: ${JSON.stringify({ 
       role: "assistant",
-      content: response
-    }) + '\n\n');
+      content: result,
+      done: true
+    })}\n\n`);
     
-    return res.end();
+    res.end();
 
   } catch (error: any) {
     console.error('Chat API Error:', {
@@ -62,12 +54,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       name: error.name
     });
     
-    res.write('data: ' + JSON.stringify({ 
+    // Send error message
+    res.write(`data: ${JSON.stringify({ 
       role: "assistant",
-      content: "Error: " + (error.message || "An unexpected error occurred")
-    }) + '\n\n');
+      content: "Error: " + (error.message || "Unknown error occurred"),
+      done: true
+    })}\n\n`);
     
-    return res.end();
+    res.end();
   }
 };
 

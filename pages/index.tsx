@@ -9,7 +9,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi there! I'm Chatbot Sonni, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?"
+      content: "Xin chào! Tôi là Chatbot SoICT, tôi có thể giúp bạn tra cứu thông tin về các hoạt động câu lạc bộ trong SoICT-HUST. Bạn có thể hỏi tôi về:\n\n1. Danh sách các câu lạc bộ trong SoICT\n2. Thông tin chi tiết về từng câu lạc bộ\n3. Lịch hoạt động của các câu lạc bộ\n4. Cách tham gia câu lạc bộ\n5. Các sự kiện sắp tới\n\nBạn muốn tìm hiểu thông tin gì?"
     }
   ]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -41,61 +41,53 @@ export default function Home() {
       }
 
       const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("No reader available");
-      }
-
-      let isFirst = true;
       const decoder = new TextDecoder();
+      let assistantMessage: Message = {
+        role: "assistant" as const,
+        content: ""
+      };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        // Decode and parse the chunk
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(5));
-              
-              if (data.error) {
-                throw new Error(data.error);
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+              if (data.done) {
+                setMessages(prev => [...prev, assistantMessage]);
+                break;
               }
-
-              if (isFirst) {
-                isFirst = false;
-                setMessages(msgs => [...msgs, {
-                  role: "assistant",
-                  content: data.content
-                }]);
-              } else {
-                setMessages(msgs => {
-                  const lastMsg = msgs[msgs.length - 1];
-                  return [
-                    ...msgs.slice(0, -1),
-                    {
-                      ...lastMsg,
-                      content: lastMsg.content + data.content
-                    }
-                  ];
-                });
-              }
-            } catch (e) {
-              console.error("Error parsing chunk:", e);
+              assistantMessage.content += data.content;
+              // Update the message in real-time
+              setMessages(prev => {
+                const newMessages = [...prev];
+                const lastMessage = newMessages[newMessages.length - 1];
+                if (lastMessage.role === "assistant") {
+                  lastMessage.content = assistantMessage.content;
+                } else {
+                  newMessages.push(assistantMessage);
+                }
+                return newMessages;
+              });
             }
           }
         }
       }
 
     } catch (error) {
-      console.error("Error in chat:", error);
-      setMessages(msgs => [...msgs, {
-        role: "assistant",
-        content: error instanceof Error ? error.message : "An error occurred"
-      }]);
+      console.error("Error:", error);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Error: " + (error instanceof Error ? error.message : "Unknown error occurred")
+        }
+      ]);
     } finally {
       setLoading(false);
     }
