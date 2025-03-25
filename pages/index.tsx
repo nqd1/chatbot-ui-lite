@@ -6,7 +6,12 @@ import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content: "Hi there! I'm Chatbot Sonni, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?"
+    }
+  ]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -101,27 +106,16 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Chatbot Sonni</title>
-        <meta
-          name="description"
-          content="A simple chatbot starter kit for OpenAI's chat model using Next.js, TypeScript, and Tailwind CSS."
-        />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1"
-        />
-        <link 
-          rel="icon"
-          type="image/png"
-          href="/Sinno_logo.png"
-        />
+        <title>Chatbot Sinno</title>
+        <meta name="description" content="AI Chatbot" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen bg-[#ffd4d4]">
         <Navbar />
-
-        <div className="flex-1 overflow-hidden sm:px-10 pb-4 sm:pb-10">
-          <div className="max-w-[800px] mx-auto mt-4 sm:mt-12 h-full">
+        <div className="flex-1 overflow-hidden">
+          <div className="max-w-[800px] mx-auto h-full">
             <Chat
               messages={messages}
               loading={loading}

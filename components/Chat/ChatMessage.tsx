@@ -21,8 +21,8 @@ interface CodeProps {
 
 export const ChatMessage: FC<Props> = ({ message }) => {
   const messageClassName = message.role === "assistant" 
-    ? "bg-neutral-100 text-neutral-900" 
-    : "flex items-center bg-[#e24242] text-white rounded-2xl px-3 py-2 max-w-[67%] whitespace-pre-wrap";
+    ? "bg-neutral-100 text-neutral-900 rounded-2xl px-3 py-2 max-w-[67%] whitespace-pre-wrap" 
+    : "flex items-center bg-[#e24242] text-white rounded-2xl px-3 py-2 max-w-[67%] whitespace-pre-wrap break-words";
 
   return (
     <div
@@ -30,36 +30,30 @@ export const ChatMessage: FC<Props> = ({ message }) => {
         message.role === "assistant" ? "justify-start" : "justify-end"
       } mb-4`}
     >
-      <div
-        className={`flex ${
-          message.role === "assistant" ? "justify-start" : "justify-end"
-        }`}
-      >
-        <div className={`flex ${messageClassName}`}>
-          <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
-            <ReactMarkdown
-              components={{
-                code({ node, inline, className, children, ...props }: CodeProps) {
-                  if (inline) {
-                    return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
+      <div className={messageClassName}>
+        <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
+          <ReactMarkdown
+            components={{
+              code({ node, inline, className, children, ...props }: CodeProps) {
+                if (inline) {
                   return (
-                    <CodeBlock
-                      language={className?.replace("language-", "") ?? ""}
-                      value={String(children).replace(/\n$/, "")}
-                      {...props}
-                    />
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
                   );
-                },
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
-          </div>
+                }
+                return (
+                  <CodeBlock
+                    language={className?.replace("language-", "") ?? ""}
+                    value={String(children).replace(/\n$/, "")}
+                    {...props}
+                  />
+                );
+              },
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
       </div>
     </div>
