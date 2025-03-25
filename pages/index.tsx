@@ -22,62 +22,31 @@ export default function Home() {
 
   const handleSend = async (message: Message) => {
     const updatedMessages = [...messages, message];
-
     setMessages(updatedMessages);
     setLoading(true);
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: updatedMessages
-      })
-    });
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: updatedMessages,
+        }),
+      });
 
-    if (!response.ok) {
-      setLoading(false);
-      throw new Error(response.statusText);
-    }
-
-    const data = response.body;
-
-    if (!data) {
-      return;
-    }
-
-    setLoading(false);
-
-    const reader = data.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-    let isFirst = true;
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunkValue = decoder.decode(value);
-
-      if (isFirst) {
-        isFirst = false;
-        setMessages((messages) => [
-          ...messages,
-          {
-            role: "assistant",
-            content: chunkValue
-          }
-        ]);
-      } else {
-        setMessages((messages) => {
-          const lastMessage = messages[messages.length - 1];
-          const updatedMessage = {
-            ...lastMessage,
-            content: lastMessage.content + chunkValue
-          };
-          return [...messages.slice(0, -1), updatedMessage];
-        });
+      if (!response.ok) {
+        throw new Error('Failed to fetch response');
       }
+
+      const data = await response.json();
+      setMessages([...updatedMessages, data]);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred while fetching the response.');
+    } finally {
+      setLoading(false);
     }
   };
 
