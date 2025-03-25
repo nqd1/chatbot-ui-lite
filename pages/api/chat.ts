@@ -2,12 +2,13 @@ import { Message } from "@/types";
 import run from "@/gemini";
 import { NextApiRequest, NextApiResponse } from 'next';
 
-export const config = {
-  runtime: 'edge',
-  regions: ['iad1']
-};
+// Remove edge runtime config since we're using standard API routes
+// export const config = {
+//   runtime: 'edge',
+//   regions: ['iad1']
+// };
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
@@ -48,21 +49,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.end();
 
   } catch (error: any) {
-    console.error('Chat API Error:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    
-    // Send error message
-    res.write(`data: ${JSON.stringify({ 
-      role: "assistant",
-      content: "Error: " + (error.message || "Unknown error occurred"),
-      done: true
-    })}\n\n`);
-    
-    res.end();
+    console.error("Error in chat API:", error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
-};
-
-export default handler;
+}
