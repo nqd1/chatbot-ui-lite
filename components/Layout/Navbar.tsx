@@ -7,13 +7,15 @@ export const Navbar: FC = () => {
       <div className="max-w-[800px] mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Image
-              src="/Sinno_logo.png"
-              alt="Sinno Logo"
-              width={32}
-              height={32}
-              className="mr-2"
-            />
+            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-2">
+              <Image
+                src="/Sinno_logo.png"
+                alt="Sinno Logo"
+                width={32}
+                height={32}
+                className="p-1"
+              />
+            </div>
             <a 
               href="https://www.facebook.com/SINNOclub/"
               target="_blank"
