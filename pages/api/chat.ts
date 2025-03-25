@@ -37,6 +37,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.end();
     }
 
+    // Format message history for Gemini
+    const formattedHistory = messages.map(msg => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: msg.content
+    }));
+
     // Call Gemini API
     console.log("Calling Gemini API with content:", lastMessage.content);
     const response = await run(lastMessage.content);

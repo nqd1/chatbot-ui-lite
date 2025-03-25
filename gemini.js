@@ -16,12 +16,26 @@ const model = genAI.getGenerativeModel({
   }
 });
 
+// Initialize chat
+const chat = model.startChat({
+  history: [
+    {
+      role: "user",
+      parts: "You are Chatbot Sonni, an AI assistant. Be helpful and friendly."
+    },
+    {
+      role: "model",
+      parts: "I understand. I am Chatbot Sonni, and I'll be helpful and friendly in our interactions."
+    }
+  ],
+});
+
 async function run(prompt) {
   try {
     console.log("Starting Gemini API call with prompt:", prompt);
     
-    // Use streaming
-    const result = await model.generateContentStream(prompt);
+    // Send message to chat
+    const result = await chat.sendMessageStream(prompt);
     
     let fullResponse = '';
     
