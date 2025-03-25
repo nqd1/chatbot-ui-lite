@@ -20,9 +20,20 @@ async function run(prompt) {
   try {
     console.log("Starting Gemini API call with prompt:", prompt);
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    // Use streaming
+    const result = await model.generateContentStream(prompt);
+    
+    let fullResponse = '';
+    
+    // Process the stream
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      fullResponse += chunkText;
+      // Return each chunk as it comes
+      console.log("Chunk received:", chunkText);
+    }
+    
+    return fullResponse;
 
   } catch (error) {
     console.error("Error in Gemini API:", error);

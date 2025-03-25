@@ -9,17 +9,23 @@ import { NextApiRequest, NextApiResponse } from 'next';
 // };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
+    // Enable streaming
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
     const { messages } = req.body as {
       messages: Message[];
     };
 
     if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Messages are required and must be an array' });
+      res.write('data: ' + JSON.stringify({ error: 'Messages are required and must be an array' }) + '\n\n');
+      return res.end();
     }
 
     // Get the last message from user
@@ -27,27 +33,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log("Processing message:", lastMessage);
     
     if (!lastMessage || !lastMessage.content) {
-      throw new Error("Invalid message format");
+      res.write('data: ' + JSON.stringify({ error: 'Invalid message format' }) + '\n\n');
+      return res.end();
     }
 
     // Call Gemini API
     console.log("Calling Gemini API with content:", lastMessage.content);
     const response = await run(lastMessage.content);
-    console.log("Gemini API response:", response);
     
-    // Check if response is an error message
-    if (response.startsWith("Error:")) {
-      throw new Error(response);
-    }
-    
-    // Return the response
-    const jsonResponse = { 
+    // Send the response
+    res.write('data: ' + JSON.stringify({
       role: "assistant",
       content: response
-    };
-    console.log("Sending response:", jsonResponse);
+    }) + '\n\n');
     
-    return res.status(200).json(jsonResponse);
+    return res.end();
 
   } catch (error: any) {
     console.error('Chat API Error:', {
@@ -56,15 +56,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       name: error.name
     });
     
-    // Return error message from Gemini if available
-    const errorMessage = error.message.startsWith("Error:") 
-      ? error.message 
-      : "An unexpected error occurred";
-    
-    return res.status(200).json({ 
+    res.write('data: ' + JSON.stringify({ 
       role: "assistant",
-      content: errorMessage
-    });
+      content: "Error: " + (error.message || "An unexpected error occurred")
+    }) + '\n\n');
+    
+    return res.end();
   }
 };
 

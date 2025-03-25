@@ -22,7 +22,6 @@ export default function Home() {
 
   const handleSend = async (message: Message) => {
     const updatedMessages = [...messages, message];
-
     setMessages(updatedMessages);
     setLoading(true);
 
@@ -41,25 +40,62 @@ export default function Home() {
         throw new Error(response.statusText);
       }
 
-      const data = await response.json();
-      
-      setMessages((messages) => [
-        ...messages,
-        {
-          role: "assistant",
-          content: data.content
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("No reader available");
+      }
+
+      let isFirst = true;
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Decode and parse the chunk
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(5));
+              
+              if (data.error) {
+                throw new Error(data.error);
+              }
+
+              if (isFirst) {
+                isFirst = false;
+                setMessages(msgs => [...msgs, {
+                  role: "assistant",
+                  content: data.content
+                }]);
+              } else {
+                setMessages(msgs => {
+                  const lastMsg = msgs[msgs.length - 1];
+                  return [
+                    ...msgs.slice(0, -1),
+                    {
+                      ...lastMsg,
+                      content: lastMsg.content + data.content
+                    }
+                  ];
+                });
+              }
+            } catch (e) {
+              console.error("Error parsing chunk:", e);
+            }
+          }
         }
-      ]);
-      
+      }
+
     } catch (error) {
-      console.error("Error:", error);
-      setMessages((messages) => [
-        ...messages,
-        {
-          role: "assistant",
-          content: "This is test message"
-        }
-      ]);
+      console.error("Error in chat:", error);
+      setMessages(msgs => [...msgs, {
+        role: "assistant",
+        content: error instanceof Error ? error.message : "An error occurred"
+      }]);
     } finally {
       setLoading(false);
     }
