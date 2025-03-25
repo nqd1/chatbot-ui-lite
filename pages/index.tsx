@@ -109,7 +109,7 @@ export default function Home() {
         <title>Chatbot Sinno</title>
         <meta name="description" content="AI Chatbot" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/Sinno_logo.png" />
       </Head>
 
       <div className="flex flex-col h-screen bg-[#ffd4d4]">
