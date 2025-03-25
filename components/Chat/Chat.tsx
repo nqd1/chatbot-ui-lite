@@ -17,8 +17,8 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+  const scrollToBottom = (smooth: boolean = false) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
   };
 
   const handleScroll = () => {
@@ -30,7 +30,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
   };
 
   useEffect(() => {
-    scrollToBottom();
+    scrollToBottom(false);
   }, [messages, loading]);
 
   return (
@@ -42,7 +42,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24 scroll-smooth"
+        className="flex-1 overflow-y-auto rounded-lg px-2 sm:p-4 sm:border border-neutral-300 pb-24"
       >
         {messages.map((message, index) => (
           <div
@@ -70,7 +70,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
 
       {showScrollButton && (
         <button
-          onClick={scrollToBottom}
+          onClick={() => scrollToBottom(true)}
           className="fixed bottom-24 right-6 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           aria-label="Scroll to bottom"
         >
