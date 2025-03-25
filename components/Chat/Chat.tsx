@@ -42,7 +42,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto rounded-lg p-5 sm:p-5 sm:border border-neutral-300 pb-24 bg-[#FFF5F5]"
+        className="flex-1 overflow-y-auto rounded-lg rounded-b-none p-5 sm:p-5 sm:border border-b-0 border-neutral-300 bg-[#FFF5F5]"
       >
         {messages.map((message, index) => (
           <div
@@ -62,8 +62,8 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-[800px] px-5">
-        <div className="bg-white rounded-xl shadow-lg p-4 border border-neutral-200">
+      <div className="w-full max-w-[800px] mx-auto">
+        <div className="bg-white rounded-b-xl shadow-lg p-4 border border-t-0 border-neutral-200">
           <ChatInput onSend={onSend} />
         </div>
       </div>
