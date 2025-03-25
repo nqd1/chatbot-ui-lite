@@ -30,26 +30,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error("Invalid message format");
     }
 
-    // Set up SSE headers
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    // Call Gemini API with streaming
+    // Call Gemini API
     console.log("Calling Gemini API with content:", lastMessage.content);
     const result = await run(lastMessage.content);
     
-    // Send the complete response at the end
-    res.write(`data: ${JSON.stringify({ 
+    if (!result) {
+      throw new Error("Empty response from Gemini API");
+    }
+
+    // Send the response
+    return res.status(200).json({
       role: "assistant",
-      content: result,
-      done: true
-    })}\n\n`);
-    
-    res.end();
+      content: result
+    });
 
   } catch (error: any) {
     console.error("Error in chat API:", error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    return res.status(500).json({ 
+      role: "assistant",
+      content: "Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau."
+    });
   }
 }
