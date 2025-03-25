@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export const Navbar: FC = () => {
   return (
-    <nav className="bg-{b01c2c] border-b border-neutral-200">
+    <nav className="bg-[#b01c2c] border-b border-neutral-200">
       <div className="max-w-[800px] mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -20,7 +20,7 @@ export const Navbar: FC = () => {
               href="https://www.facebook.com/SINNOclub/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xl font-bold text-[FFF5F5] hover:text-neutral-200 transition-colors"
+              className="text-xl font-bold text-[#FFF5F5] hover:text-neutral-200 transition-colors"
             >
               Chatbot Sinno
             </a>
