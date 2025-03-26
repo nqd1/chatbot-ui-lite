@@ -20,13 +20,12 @@ const model = genAI.getGenerativeModel({
 const defaultRole = {
   role: "fatherly",
   personality: "harsh and strict",
-  expertise: "general knowlegde and life advice" 
-
+  expertise: "general knowlegde and life advice",
+  tone: "like an old man",
+  language: "Vietnamese",
 };
 
-
-
-async function run(prompt, roleConfig = defaultRole) {
+async function run(prompt, roleConfig = defaultRole, onStream = null) {
   try {
     console.log("Starting Gemini API call with prompt:", prompt);
     
@@ -35,13 +34,30 @@ async function run(prompt, roleConfig = defaultRole) {
 - Role: ${roleConfig.role}
 - Personality: ${roleConfig.personality}
 - Expertise: ${roleConfig.expertise}
+- Tone: ${roleConfig.tone}
+- Language: ${roleConfig.language}
 
-Please respond with Vietnamese to the following user message while maintaining this role and personality:
+Please respond to the following user message while maintaining this role and personality:
 ${prompt}`;
     
-    const result = await model.generateContent(systemPrompt);
-    const response = await result.response;
-    return response.text();
+    if (onStream) {
+      // Streaming mode
+      const result = await model.generateContentStream(systemPrompt);
+      let fullResponse = '';
+      
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        fullResponse += chunkText;
+        onStream(chunkText);
+      }
+      
+      return fullResponse;
+    } else {
+      // Non-streaming mode
+      const result = await model.generateContent(systemPrompt);
+      const response = await result.response;
+      return response.text();
+    }
 
   } catch (error) {
     console.error("Error in Gemini API:", error);
