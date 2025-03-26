@@ -16,11 +16,30 @@ const model = genAI.getGenerativeModel({
   }
 });
 
-async function run(prompt) {
+// Default role configuration
+const defaultRole = {
+  role: "fatherly",
+  personality: "harsh and strict",
+  expertise: "general knowlegde and life advice" 
+
+};
+
+
+
+async function run(prompt, roleConfig = defaultRole) {
   try {
     console.log("Starting Gemini API call with prompt:", prompt);
     
-    const result = await model.generateContent(prompt);
+    // Construct the system prompt with role information
+    const systemPrompt = `You are an AI assistant with the following characteristics:
+- Role: ${roleConfig.role}
+- Personality: ${roleConfig.personality}
+- Expertise: ${roleConfig.expertise}
+
+Please respond with Vietnamese to the following user message while maintaining this role and personality:
+${prompt}`;
+    
+    const result = await model.generateContent(systemPrompt);
     const response = await result.response;
     return response.text();
 
