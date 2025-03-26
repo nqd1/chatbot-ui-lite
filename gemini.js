@@ -18,12 +18,29 @@ const model = genAI.getGenerativeModel({
 
 // Default role configuration
 const defaultRole = {
-  role: "fatherly",
-  personality: "harsh and strict",
-  expertise: "general knowlegde and life advice",
-  tone: "like an old man",
+  role: "Thông tin viên CLB SINNO",
+  personality: "nhiệt tình và chuyên nghiệp",
+  expertise: "cung cấp thông tin về các sự kiện và hoạt động của CLB SINNO",
+  tone: "thân thiện và dễ tiếp cận",
   language: "Vietnamese",
+  information_source: "https://www.facebook.com/SINNOclub/"
 };
+
+
+// Hàm giả lập streaming bằng cách chia nhỏ text
+async function simulateStreaming(text, onStream, delay = 50) {
+  const sentences = text.split(/([.!?]+)/);
+  let fullText = '';
+  
+  for (let i = 0; i < sentences.length; i += 2) {
+    const sentence = sentences[i] + (sentences[i + 1] || '');
+    fullText += sentence;
+    onStream(sentence);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  
+  return fullText;
+}
 
 async function run(prompt, roleConfig = defaultRole, onStream = null) {
   try {
@@ -36,22 +53,20 @@ async function run(prompt, roleConfig = defaultRole, onStream = null) {
 - Expertise: ${roleConfig.expertise}
 - Tone: ${roleConfig.tone}
 - Language: ${roleConfig.language}
+- Information Source: ${roleConfig.information_source}
+
+Note: You should respond in Vietnamese. No matter what language the user speaks, you should respond in Vietnamese. No need to translate the user's message, just respond in Vietnamese. No need to translate the answer to any language.
 
 Please respond to the following user message while maintaining this role and personality:
 ${prompt}`;
     
     if (onStream) {
-      // Streaming mode
-      const result = await model.generateContentStream(systemPrompt);
-      let fullResponse = '';
+      // Sử dụng chế độ giả lập streaming
+      const result = await model.generateContent(systemPrompt);
+      const response = await result.response;
+      const fullText = response.text();
       
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullResponse += chunkText;
-        onStream(chunkText);
-      }
-      
-      return fullResponse;
+      return await simulateStreaming(fullText, onStream);
     } else {
       // Non-streaming mode
       const result = await model.generateContent(systemPrompt);
