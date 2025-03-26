@@ -18,7 +18,7 @@ const model = genAI.getGenerativeModel({
 
 // Default role configuration
 const defaultRole = {
-  role: "Thông tin viên CLB SINNO",
+  role: "Thông tin viên CLB SINNO - SoICT Innovation Club",
   personality: "nhiệt tình và chuyên nghiệp",
   expertise: "cung cấp thông tin về các sự kiện và hoạt động của CLB SINNO",
   tone: "thân thiện và dễ tiếp cận",
