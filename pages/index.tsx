@@ -6,10 +6,12 @@ import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
+  const startMessages = "Xin chào! Tôi là Chatbot Sinno, một trợ lý AI. Tôi có thể giúp bạn với những việc như trả lời câu hỏi, cung cấp thông tin, và hỗ trợ các nhiệm vụ. Tôi có thể giúp gì cho bạn?";
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi there! I'm Chatbot Sonni, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?"
+      content: startMessages
     }
   ]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -69,7 +71,7 @@ export default function Home() {
     setMessages([
       {
         role: "assistant",
-        content: `Hi there! I'm Chatbot Sonni, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?`
+        content: startMessages
       }
     ]);
   };
@@ -82,7 +84,7 @@ export default function Home() {
     setMessages([
       {
         role: "assistant",
-        content: `Hi there! I'm Chatbot Sonni, an AI assistant. I can help you with things like answering questions, providing information, and helping with tasks. How can I help you?`
+        content: startMessages
       }
     ]);
   }, []);
