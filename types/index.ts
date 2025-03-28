@@ -5,6 +5,8 @@ export enum OpenAIModel {
 export interface Message {
   role: Role;
   content: string;
+  isStreaming?: boolean;
+  timestamp?: number;
 }
 
 export type Role = "assistant" | "user";

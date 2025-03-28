@@ -1,5 +1,14 @@
 import { Message } from "@/types";
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+// Fix process.env access by adding proper type declarations
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      REACT_APP_API_URL: string;
+    }
+  }
+}
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -43,7 +52,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           role: "user",
           content: lastMessage.content
         }]
-
       })
     });
 
@@ -51,13 +59,57 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log("Backend API response:", data);
+    // For streaming response, we need to read the response as text
+    const responseText = await response.text();
+    console.log("Backend API response text:", responseText);
+    
+    let content = "Không thể xử lý yêu cầu của bạn";
+    
+    try {
+      // Try to parse the response text as JSON if possible
+      const data = JSON.parse(responseText);
+      content = data.content || data.message || content;
+    } catch (parseError) {
+      // If parsing fails, try to extract content from chunk format
+      console.log("Parsing response as JSON failed, trying to extract from chunks");
+      
+      // Check for chunked format: {"chunk": "text"}{"chunk": "more text"}
+      const chunkPattern = /\{"chunk":[\s]*"([^"]*)"\}/g;
+      const matches = Array.from(responseText.matchAll(chunkPattern));
+      
+      if (matches && matches.length > 0) {
+        // Extract and combine chunks
+        let extractedContent = '';
+        
+        for (const match of matches) {
+          if (match[1]) {
+            // Decode escaped Unicode characters
+            const chunkText = match[1].replace(/\\u([0-9a-fA-F]{4})/g, (_: string, code: string) => {
+              return String.fromCharCode(parseInt(code, 16));
+            });
+            
+            extractedContent += chunkText;
+          }
+        }
+        
+        if (extractedContent) {
+          content = extractedContent;
+          console.log("Successfully extracted content from chunks");
+        } else {
+          // If extraction didn't yield valid content, use raw text
+          content = responseText.trim();
+        }
+      } else {
+        // Use raw text as fallback
+        content = responseText.trim();
+      }
+    }
     
     // Return the response
     const jsonResponse = { 
       role: "assistant",
-      content: data.content || data.message || "Không thể xử lý yêu cầu của bạn"
+      content: content,
+      streaming: true // Enable streaming on the frontend
     };
     console.log("Sending response:", jsonResponse);
     

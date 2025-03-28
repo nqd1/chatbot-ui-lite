@@ -8,17 +8,18 @@ import { ResetChat } from "./ResetChat";
 interface Props {
   messages: Message[];
   loading: boolean;
+  streaming: boolean;
   onSend: (message: Message) => void;
   onReset: () => void;
 }
 
-export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
+export const Chat: FC<Props> = ({ messages, loading, streaming, onSend, onReset }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = (smooth: boolean = false) => {
-    messagesEndRef.current?.scrollIntoView({behavior : "smooth"})//({ behavior: smooth ? "smooth" : "auto" });
+    messagesEndRef.current?.scrollIntoView({behavior : smooth ? "smooth" : "auto"});
   };
 
   const handleScroll = () => {
@@ -30,8 +31,9 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
   };
 
   useEffect(() => {
-    scrollToBottom(false);
-  }, [messages, loading]);
+    // Always scroll to bottom when streaming or new messages arrive
+    scrollToBottom(true);
+  }, [messages, loading, streaming]);
 
   return (
     <div className="flex flex-col h-full">
@@ -46,14 +48,17 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
       >
         {messages.map((message, index) => (
           <div
-            key={index}
+            key={`msg-${index}-${message.timestamp || index}`}
             className="my-1 sm:my-1.5"
           >
-            <ChatMessage message={message} />
+            <ChatMessage 
+              message={message} 
+              isStreaming={message.isStreaming && streaming} 
+            />
           </div>
         ))}
 
-        {loading && (
+        {loading && !streaming && (
           <div className="my-1 sm:my-1.5">
             <ChatLoader />
           </div>
@@ -64,7 +69,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
 
       <div className="w-full max-w-[800px] mx-auto">
         <div className="bg-white rounded-b-xl shadow-lg p-4 border border-t-0 border-neutral-200">
-          <ChatInput onSend={onSend} />
+          <ChatInput onSend={onSend} disabled={loading || streaming} />
         </div>
       </div>
 
