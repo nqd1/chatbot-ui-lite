@@ -34,8 +34,8 @@ export default function Home() {
     setStreamedResponse("");
 
     try {
-      // Use streaming API
-      const streamingEnabled = true; // You can make this configurable
+      // Luôn dùng streaming
+      const streamingEnabled = true;
 
       if (streamingEnabled) {
         setStreaming(true);
@@ -50,29 +50,50 @@ export default function Home() {
         ]);
 
         // Use streaming response
-        const stream = await GeminiStream(updatedMessages);
-        const reader = stream.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        let accumulatedResponse = "";
+        try {
+          console.log("Fetching streaming response...");
+          const stream = await GeminiStream(updatedMessages);
+          
+          if (!stream) {
+            throw new Error("Không nhận được phản hồi từ API");
+          }
+          
+          const reader = stream.getReader();
+          const decoder = new TextDecoder();
+          let done = false;
+          let accumulatedResponse = "";
 
-        while (!done) {
-          const { value, done: doneReading } = await reader.read();
-          done = doneReading;
-          if (done) break;
-          
-          const chunkValue = decoder.decode(value);
-          accumulatedResponse += chunkValue;
-          
-          // Update the current streaming response
-          setStreamedResponse(accumulatedResponse);
-          
-          // Update the last message from the assistant with the accumulated text
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            if (done) break;
+            
+            const chunkValue = decoder.decode(value);
+            accumulatedResponse += chunkValue;
+            
+            console.log("Current chunk:", chunkValue);
+            console.log("Accumulated:", accumulatedResponse);
+            
+            // Update the current streaming response
+            setStreamedResponse(accumulatedResponse);
+            
+            // Update the last message from the assistant with the accumulated text
+            setMessages((current) => [
+              ...current.slice(0, -1),
+              {
+                role: "assistant",
+                content: accumulatedResponse
+              }
+            ]);
+          }
+        } catch (streamingError) {
+          console.error("Streaming error:", streamingError);
+          // Handle streaming error - replace empty message with error
           setMessages((current) => [
-            ...current.slice(0, -1),
+            ...current.slice(0, -1), 
             {
-              role: "assistant",
-              content: accumulatedResponse
+              role: "assistant", 
+              content: "Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn."
             }
           ]);
         }
