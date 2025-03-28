@@ -12,7 +12,7 @@ const model = genAI.getGenerativeModel({
   model: "gemini-2.0-flash",
   generationConfig: {
     temperature: 0.7,
-    maxOutputTokens: 2048,
+    maxOutputTokens: 8192,
   }
 });
 
@@ -42,6 +42,13 @@ Please respond to the following user message while maintaining this role and per
 ${prompt}`;
 }
 
+/**
+ * Run the Gemini model with the given prompt
+ * @param {string} prompt - User prompt
+ * @param {boolean} streamMode - Whether to use streaming mode
+ * @param {object} roleConfig - Role configuration
+ * @returns {string|object} - String response for non-streaming, stream object for streaming
+ */
 async function run(prompt, streamMode = false, roleConfig = defaultRole) {
   try {
     console.log("Starting Gemini API call with prompt:", prompt);
@@ -51,8 +58,7 @@ async function run(prompt, streamMode = false, roleConfig = defaultRole) {
     if (streamMode) {
       // Real streaming mode with the Google Generative AI SDK
       console.log("Using streaming mode");
-      const streamResult = await model.generateContentStream(systemPrompt);
-      return streamResult;
+      return await model.generateContentStream(systemPrompt);
     } else {
       // Non-streaming mode
       const result = await model.generateContent(systemPrompt);

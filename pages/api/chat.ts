@@ -44,16 +44,45 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         // Call Gemini API with streaming
         const streamResponse = await run(lastMessage.content, true);
         
-        // Process stream chunks
-        for await (const chunk of streamResponse) {
-          if (chunk && chunk.text) {
-            // Send chunk as SSE
-            res.write(`data: ${JSON.stringify({ chunk: chunk.text })}\n\n`);
-          }
+        // Check if streamResponse is a string (which means it's an error)
+        if (typeof streamResponse === 'string') {
+          res.write(`data: ${JSON.stringify({ error: streamResponse })}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
         }
         
-        // Send end event
-        res.write('data: [DONE]\n\n');
+        // Process stream chunks
+        try {
+          // Using proper iteration for GenerateContentStreamResult
+          // The streamResponse has a .stream property that's an AsyncGenerator
+          // We can iterate over it with for await
+          // @ts-ignore - We're ignoring type checking for now as we know the structure
+          for await (const item of streamResponse.stream) {
+            // Extract the text content from the candidates
+            // @ts-ignore
+            if (item.candidates && item.candidates[0] && item.candidates[0].content) {
+              // @ts-ignore
+              const parts = item.candidates[0].content.parts;
+              if (parts && parts.length > 0) {
+                // The text is in the parts array
+                for (const part of parts) {
+                  if (part.text) {
+                    // Send chunk as SSE
+                    res.write(`data: ${JSON.stringify({ chunk: part.text })}\n\n`);
+                  }
+                }
+              }
+            }
+          }
+          
+          // Send end event
+          res.write('data: [DONE]\n\n');
+        } catch (streamError: any) {
+          console.error('Stream processing error:', streamError);
+          res.write(`data: ${JSON.stringify({ error: streamError.message })}\n\n`);
+        }
+        
         res.end();
       } catch (error: any) {
         console.error('Streaming error:', error);
@@ -70,14 +99,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log("Gemini API response:", response);
     
     // Check if response is an error message
-    if (response.startsWith("Error:")) {
+    if (typeof response === 'string' && response.startsWith("Error:")) {
       throw new Error(response);
     }
     
     // Return the response
     const jsonResponse = { 
       role: "assistant",
-      content: response
+      content: typeof response === 'string' ? response : "Error: Invalid response format"
     };
     console.log("Sending response:", jsonResponse);
     
