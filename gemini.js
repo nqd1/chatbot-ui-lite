@@ -26,28 +26,9 @@ const defaultRole = {
   information_source: "https://www.facebook.com/SINNOclub/"
 };
 
-
-// Hàm giả lập streaming bằng cách chia nhỏ text
-async function simulateStreaming(text, onStream, delay = 50) {
-  const sentences = text.split(/([.!?]+)/);
-  let fullText = '';
-  
-  for (let i = 0; i < sentences.length; i += 2) {
-    const sentence = sentences[i] + (sentences[i + 1] || '');
-    fullText += sentence;
-    onStream(sentence);
-    await new Promise(resolve => setTimeout(resolve, delay));
-  }
-  
-  return fullText;
-}
-
-async function run(prompt, roleConfig = defaultRole, onStream = null) {
-  try {
-    console.log("Starting Gemini API call with prompt:", prompt);
-    
-    // Construct the system prompt with role information
-    const systemPrompt = `You are an AI assistant with the following characteristics:
+// Construct the system prompt with role information
+function buildSystemPrompt(prompt, roleConfig) {
+  return `You are an AI assistant with the following characteristics:
 - Role: ${roleConfig.role}
 - Personality: ${roleConfig.personality}
 - Expertise: ${roleConfig.expertise}
@@ -59,14 +40,19 @@ Note: You should respond in Vietnamese. No matter what language the user speaks,
 
 Please respond to the following user message while maintaining this role and personality:
 ${prompt}`;
+}
+
+async function run(prompt, streamMode = false, roleConfig = defaultRole) {
+  try {
+    console.log("Starting Gemini API call with prompt:", prompt);
     
-    if (onStream) {
-      // Sử dụng chế độ giả lập streaming
-      const result = await model.generateContent(systemPrompt);
-      const response = await result.response;
-      const fullText = response.text();
-      
-      return await simulateStreaming(fullText, onStream);
+    const systemPrompt = buildSystemPrompt(prompt, roleConfig);
+    
+    if (streamMode) {
+      // Real streaming mode with the Google Generative AI SDK
+      console.log("Using streaming mode");
+      const streamResult = await model.generateContentStream(systemPrompt);
+      return streamResult;
     } else {
       // Non-streaming mode
       const result = await model.generateContent(systemPrompt);

@@ -72,3 +72,73 @@ export const OpenAIStream = async (messages: Message[]) => {
     throw error;
   }
 };
+
+export const GeminiStream = async (messages: Message[]) => {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  try {
+    console.log("Sending request to Gemini API with streaming...");
+    const res = await fetch("/api/chat", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({
+        messages,
+        stream: true
+      })
+    });
+
+    if (res.status !== 200) {
+      const error = await res.json();
+      console.error("Gemini API Error:", error);
+      throw new Error(`Gemini API returned an error: ${res.status} ${JSON.stringify(error)}`);
+    }
+
+    console.log("Response received from Gemini with streaming");
+    const stream = new ReadableStream({
+      async start(controller) {
+        const onParse = (event: ParsedEvent | ReconnectInterval) => {
+          if (event.type === "event") {
+            const data = event.data;
+
+            if (data === "[DONE]") {
+              controller.close();
+              return;
+            }
+
+            try {
+              const json = JSON.parse(data);
+              if (json.error) {
+                console.error("Gemini API streaming error:", json.error);
+                controller.error(new Error(json.error));
+                return;
+              }
+              
+              const text = json.chunk;
+              if (text) {
+                const queue = encoder.encode(text);
+                controller.enqueue(queue);
+              }
+            } catch (e) {
+              console.error("Parsing error:", e);
+              controller.error(e);
+            }
+          }
+        };
+
+        const parser = createParser(onParse);
+
+        for await (const chunk of res.body as any) {
+          parser.feed(decoder.decode(chunk));
+        }
+      }
+    });
+
+    return stream;
+  } catch (error) {
+    console.error("Stream error:", error);
+    throw error;
+  }
+};

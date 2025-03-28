@@ -14,8 +14,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { messages } = req.body as {
+    const { messages, stream = false } = req.body as {
       messages: Message[];
+      stream?: boolean;
     };
 
     if (!messages || !Array.isArray(messages)) {
@@ -30,7 +31,40 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new Error("Invalid message format");
     }
 
-    // Call Gemini API
+    // Handle streaming response
+    if (stream) {
+      // Set appropriate headers for streaming
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+      });
+
+      try {
+        // Call Gemini API with streaming
+        const streamResponse = await run(lastMessage.content, true);
+        
+        // Process stream chunks
+        for await (const chunk of streamResponse) {
+          if (chunk && chunk.text) {
+            // Send chunk as SSE
+            res.write(`data: ${JSON.stringify({ chunk: chunk.text })}\n\n`);
+          }
+        }
+        
+        // Send end event
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } catch (error: any) {
+        console.error('Streaming error:', error);
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+      }
+      
+      return;
+    }
+    
+    // Non-streaming response (original implementation)
     console.log("Calling Gemini API with content:", lastMessage.content);
     const response = await run(lastMessage.content);
     console.log("Gemini API response:", response);

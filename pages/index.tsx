@@ -2,6 +2,7 @@ import { Chat } from "@/components/Chat/Chat";
 import { Footer } from "@/components/Layout/Footer";
 import { Navbar } from "@/components/Layout/Navbar";
 import { Message } from "@/types";
+import { GeminiStream } from "@/utils";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,6 +16,8 @@ export default function Home() {
     }
   ]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [streaming, setStreaming] = useState<boolean>(false);
+  const [streamedResponse, setStreamedResponse] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -27,31 +30,81 @@ export default function Home() {
 
     setMessages(updatedMessages);
     setLoading(true);
+    setStreaming(false);
+    setStreamedResponse("");
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          messages: updatedMessages
-        })
-      });
+      // Use streaming API
+      const streamingEnabled = true; // You can make this configurable
 
-      if (!response.ok) {
-        throw new Error(response.statusText);
-      }
+      if (streamingEnabled) {
+        setStreaming(true);
+        
+        // Add an empty assistant message that will be filled by streaming
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content: ""
+          }
+        ]);
 
-      const data = await response.json();
-      
-      setMessages((messages) => [
-        ...messages,
-        {
-          role: "assistant",
-          content: data.content
+        // Use streaming response
+        const stream = await GeminiStream(updatedMessages);
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let accumulatedResponse = "";
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (done) break;
+          
+          const chunkValue = decoder.decode(value);
+          accumulatedResponse += chunkValue;
+          
+          // Update the current streaming response
+          setStreamedResponse(accumulatedResponse);
+          
+          // Update the last message from the assistant with the accumulated text
+          setMessages((current) => [
+            ...current.slice(0, -1),
+            {
+              role: "assistant",
+              content: accumulatedResponse
+            }
+          ]);
         }
-      ]);
+
+        setStreaming(false);
+        
+      } else {
+        // Traditional non-streaming request
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messages: updatedMessages
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+
+        const data = await response.json();
+        
+        setMessages((messages) => [
+          ...messages,
+          {
+            role: "assistant",
+            content: data.content
+          }
+        ]);
+      }
       
     } catch (error) {
       console.error("Error:", error);
@@ -59,11 +112,12 @@ export default function Home() {
         ...messages,
         {
           role: "assistant",
-          content: "This is test message"
+          content: "Đã xảy ra lỗi khi xử lý yêu cầu của bạn."
         }
       ]);
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   };
 
@@ -74,11 +128,13 @@ export default function Home() {
         content: startMessages
       }
     ]);
+    setStreaming(false);
+    setStreamedResponse("");
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamedResponse]);
 
   useEffect(() => {
     setMessages([
@@ -105,6 +161,7 @@ export default function Home() {
             <Chat
               messages={messages}
               loading={loading}
+              streaming={streaming}
               onSend={handleSend}
               onReset={handleReset}
             />

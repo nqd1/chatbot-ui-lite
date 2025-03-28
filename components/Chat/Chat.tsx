@@ -8,11 +8,12 @@ import { ResetChat } from "./ResetChat";
 interface Props {
   messages: Message[];
   loading: boolean;
+  streaming?: boolean;
   onSend: (message: Message) => void;
   onReset: () => void;
 }
 
-export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
+export const Chat: FC<Props> = ({ messages, loading, streaming = false, onSend, onReset }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -31,7 +32,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
 
   useEffect(() => {
     scrollToBottom(false);
-  }, [messages, loading]);
+  }, [messages, loading, streaming]);
 
   return (
     <div className="flex flex-col h-full">
@@ -50,10 +51,15 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
             className="my-1 sm:my-1.5"
           >
             <ChatMessage message={message} />
+            {streaming && index === messages.length - 1 && message.role === "assistant" && (
+              <div className="ml-2 mt-1 inline-block">
+                <span className="animate-pulse text-gray-600">▌</span>
+              </div>
+            )}
           </div>
         ))}
 
-        {loading && (
+        {loading && !streaming && (
           <div className="my-1 sm:my-1.5">
             <ChatLoader />
           </div>
@@ -64,7 +70,7 @@ export const Chat: FC<Props> = ({ messages, loading, onSend, onReset }) => {
 
       <div className="w-full max-w-[800px] mx-auto">
         <div className="bg-white rounded-b-xl shadow-lg p-4 border border-t-0 border-neutral-200">
-          <ChatInput onSend={onSend} />
+          <ChatInput onSend={onSend} disabled={loading || streaming} />
         </div>
       </div>
 
