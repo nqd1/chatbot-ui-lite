@@ -1,6 +1,7 @@
 import { Message } from "@/types";
-import run from "@/gemini";
 import { NextApiRequest, NextApiResponse } from 'next';
+
+const API_URL = process.env.REACT_APP_API_URL;
 
 // Remove edge runtime config
 // export const config = {
@@ -30,40 +31,41 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new Error("Invalid message format");
     }
 
-    // Call Gemini API
-    console.log("Calling Gemini API with content:", lastMessage.content);
-    const response = await run(lastMessage.content);
-    console.log("Gemini API response:", response);
-    
-    // Check if response is an error message
-    if (response.startsWith("Error:")) {
-      throw new Error(response);
+    // Call Backend API
+    console.log("Calling Backend API with content:", lastMessage.content);
+    const response = await fetch(`${API_URL}/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [{
+          role: "user",
+          content: lastMessage.content
+        }]
+
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    console.log("Backend API response:", data);
     
     // Return the response
     const jsonResponse = { 
       role: "assistant",
-      content: response
+      content: data.content || data.message || "Không thể xử lý yêu cầu của bạn"
     };
     console.log("Sending response:", jsonResponse);
     
     return res.status(200).json(jsonResponse);
-
   } catch (error: any) {
-    console.error('Chat API Error:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    
-    // Return error message from Gemini if available
-    const errorMessage = error.message.startsWith("Error:") 
-      ? error.message 
-      : "An unexpected error occurred";
-    
-    return res.status(200).json({ 
-      role: "assistant",
-      content: errorMessage
+    console.error("Error in chat API:", error);
+    return res.status(500).json({ 
+      error: error.message || "Internal server error" 
     });
   }
 };
